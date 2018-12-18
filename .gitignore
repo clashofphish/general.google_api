@@ -3,7 +3,11 @@ NonRepositoryData
 
 # Ignore access keys
 token.json
+tokens.json
 client_secret.json
+client_secrets.json
+credential.json
+credentials.json
 
 # Excel temporary files
 ~$*

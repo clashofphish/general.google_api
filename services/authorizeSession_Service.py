@@ -6,40 +6,44 @@ if base_path not in sys.path:
     sys.path.append(base_path)
 
 # Custom imports
-from services.oauth2Flow_Services import Oauth2UsingFlow
+from procedures.oauth2Flow_Procedures import Oauth2UsingFlow
 
 
 class RequestSession:
     """Use the authorization object to generate a session for requests.
 
-    :param authorizing_flow: obj: Oauth 2 authorization class
+    :param authorizing_oauth: obj: Oauth 2 authorization class
 
     Internally determined:
         :param session: obj: authorized session object for making requests
     """
     def __init__(
             self,
-            authorizing_flow: Oauth2UsingFlow
+            authorizing_oauth: Oauth2UsingFlow
     ):
-        self.authorizing_flow = authorizing_flow
+        self.authorizing_oauth = authorizing_oauth
         # Internally determined parameters
         self._session = None
 
     @property
-    def authorizing_flow(self):
-        return self._authorizing_flow
+    def authorizing_oauth(self):
+        return self._authorizing_oauth
 
-    @authorizing_flow.setter
-    def authorizing_flow(self, new):
-        self._authorizing_flow = new
+    @authorizing_oauth.setter
+    def authorizing_oauth(self, new):
+        self._authorizing_oauth = new
 
     # Internally determined parameters
     @property
     def session(self):
         return self._session
 
-    def authorize_session(self):
+    def authorize_session(self, save_new=True):
         """Create authorized session."""
-        self.authorizing_flow.initialize_flow()
-        self.authorizing_flow.authorize_token()
-        self._session = self.authorizing_flow.authorize_session()
+        self.authorizing_oauth.instantiate_creds()
+        self.authorizing_oauth.authorize_token()
+
+        if save_new:
+            self.authorizing_oauth.save_updated_creds()
+
+        self._session = self.authorizing_oauth.authorize_session()
