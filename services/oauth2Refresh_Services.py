@@ -1,4 +1,7 @@
-from google_auth_oauthlib.flow import Flow
+"""File to serve as the base classes for implementing Google OAuth2 using previously
+saved authentication token and client secrets credentials."""
+from google.auth.transport.requests import AuthorizedSession
+from google.oauth2.credentials import Credentials
 
 import os
 import sys
@@ -6,132 +9,75 @@ base_path = os.path.abspath(os.path.join('..'))
 if base_path not in sys.path:
     sys.path.append(base_path)
 
-
-class RefreshAuthFlow:
-    """Use flow object to load a previously saved token and use a flow object to
-    refresh the token.
-
-    :param load_save: obj: file handling object; assumes
-                            'read_json' & 'write_json' methods
-    :param filename: str: file location and name as single string for token file
-
-    Internally determined:
-        :param token: json obj: created authorization token
-    """
-    def __init__(
-            self,
-            load_save: FileHandling,
-            filename
-    ):
-        self.load_save = load_save
-        self.filename = filename
-        # Internally determined parameters
-        self.token = None
-
-    @property
-    def load_save(self):
-        return self._load_save
-
-    @load_save.setter
-    def load_save(self, new):
-        self._load_save = new
-
-    @property
-    def filename(self):
-        return self._filename
-
-    @filename.setter
-    def filename(self, new):
-        self._filename = new
-
-    # Internally determined parameters
-    @property
-    def token(self):
-        return self._token
-
-    @token.setter
-    def token(self, new):
-        self._token = new
-
-        if self._token is not None:
-            self._refresh_token = self._token['refresh_token']
-
-    def load_token(self, flow, creds):
-        """Load token from file and refresh it.
-
-        :param flow: google_auth_oauthlib.flow: initialized object
-        :param creds: dict: credentials dictionary
-        :return flow: google_auth_oauthlib.flow: authorization token fetched
-        """
-        self.token = self.load_save.read_json(filename=self.filename)
-
-        client_details = {
-            'client_id': creds['installed']['client_id'],
-            'client_secrets': creds['installed']['client_secret']
-        }
-        refresh_uri = creds['installed']['token_uri']
-
-        # Sets the token parameter to the updated token.
-        self.token = flow.oauth2session.refresh_token(
-            token_url=refresh_uri,
-            refresh_token=self._refresh_token,
-            **client_details
-        )
-        # Tempory: test whether calling fetch_token after calling refresh_token works
-        flow.fetch_token()
-
-        return flow
-
-    def save_token(self):
-        """Save the token to file."""
-        self.load_save.write_json(filename=self.filename, json_obj=self._token)
+# Custom imports
+from services.oauth2FileHandling_Services \
+    import ClientSecretsGoogleHandling, AuthTokenFileHandling
 
 
-class GoogleCredentialHandling:
+class RefreshCredentialFile:
     """Use to interface google.oauth.credentials with token and client secrets json.
     """
     def __init__(
             self,
             client_handling: ClientSecretsGoogleHandling,
-            token_handling: AuthTokenFileHandling,
-            credentials: Credentials = None
+            token_handling: AuthTokenFileHandling
     ):
         self.client_handling = client_handling
         self.token_handling = token_handling
-        self.credentials = credentials
+        # Internally determined parameters
+        self._credentials = None
+        self._session = None
+
+    @property
+    def client_handling(self):
+        return self._client_handling
+
+    @client_handling.setter
+    def client_handling(self, new):
+        self._client_handling = new
+
+    @property
+    def token_handling(self):
+        return self._token_handling
+
+    @token_handling.setter
+    def token_handling(self, new):
+        self._token_handling = new
+
+    # Internally determined parameters
+    @property
+    def credentials(self):
+        return self._credentials
+
+    @property
+    def session(self):
+        return self._session
 
     def initialize_saved_creds(self):
         """Initialize credentials using saved credentials."""
-        self.client_handling.load_dict_create()
-        self.token_handling.load_dict_create()
+        self.client_handling.load_json_create()
+        self.token_handling.load_json_create()
 
-        self.credentials = Credentials(
+        self._credentials = Credentials(
             token=self.token_handling.access_token,
             refresh_token=self.token_handling.refresh_token,
             id_token=self.token_handling.id_token,
-            token_uri=self.token_handling.refresh_token,
+            token_uri=self.client_handling.refresh_uri,
             client_id=self.client_handling.client_id,
             client_secret=self.client_handling.client_secret,
             scopes=self.token_handling.scope
         )
 
-        self.credentials.expiry = self.token_handling.expires_at
+        self._credentials.expiry = self.token_handling.expires_at
+
+    def refresh_creds(self):
+        """Refresh the credentials with the refresh token."""
+        # request = google_requests.Request()
+        # self._credentials.refresh(request)
+
+        self._session = AuthorizedSession(self._credentials)
 
     def save_updated_creds(self):
-        """Save the credentials from the credential object."""
-        # Client secret creds update
-        self.client_handling.client_id = self.credentials.client_id
-        self.client_handling.client_secret = self.credentials.client_secret
-        self.client_handling.token_uri = self.credentials.token_uri
-
-        # Token creds update
-        self.token_handling.expires_at = self.credentials.expiry
-        self.token_handling.id_token = self.credentials.id
-        self.token_handling.refresh_token = self.credentials.refresh_token
-        self.token_handling.scope = self.credentials.scopes
-        self.token_handling.access_token = self.credentials.token
-        self.token_handling.valid = self.credentials.valid
-
-        # Save credentials
-        self.client_handling.create_dict_save()
-        self.token_handling.create_dict_save()
+        """Save the refreshed credentials."""
+        self.token_handling.expires_at = self._session.credentials.expiry
+        self.token_handling.create_json_save()

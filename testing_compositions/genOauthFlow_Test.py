@@ -6,10 +6,14 @@ if base_path not in sys.path:
 
 # Custom imports
 from services.fileHandling_Service import FileHandling
-from services.oauth2Flow_Services import ManualAuthFlow
 from services.oauth2FileHandling_Services \
     import LocalCredHandling, ClientSecretsGoogleHandling, AuthTokenFileHandling
-from procedures.oauth2Flow_Procedures import FlowCredentialFile, Oauth2UsingFlow
+from services.oauth2Flow_Services import ManualAuthFlow, FlowCredentialFile
+from services.oauth2Refresh_Services import RefreshCredentialFile
+
+from procedures.oauth2Flow_Procedures import Oauth2UsingFlow
+from procedures.oauth2Refresh_Procedures import Oauth2UsingToken
+
 from services.authorizeSession_Service import RequestSession
 from services.requestsHTTP_Services import SessionRequests
 
@@ -33,8 +37,6 @@ SAMPLE_RANGE_NAME = ''
 def manual_auth():
     # Init classes
     file_handling = FileHandling()
-    auth_meth = ManualAuthFlow()
-
     local_cred = LocalCredHandling(load_save=file_handling)
     secrets = ClientSecretsGoogleHandling(
         file_service=local_cred,
@@ -46,6 +48,7 @@ def manual_auth():
         scope=SCOPES
     )
 
+    auth_meth = ManualAuthFlow()
     cred_files = FlowCredentialFile(
         client_handling=secrets,
         token_handling=token
@@ -63,27 +66,37 @@ def manual_auth():
     reqs.fetch_test()
 
 
-# def refresh_auth():
-#     # Init classes
-#     file_handling = FileHandling()
-#     auth_meth = RefreshAuthFlow(load_save=file_handling, filename=TOKEN_LOC)
-#     creds = GoogleCredHandling(
-#         load_save=file_handling,
-#         filename=CREDS_LOC,
-#         scopes=SCOPES
-#     )
-#
-#     oauth = Oauth2UsingFlow(handle_creds=creds, handle_token=auth_meth)
-#     session = RequestSession(authorizing_flow=oauth)
-#     reqs = SessionRequests()
-#
-#     # Authorize session
-#     session.authorize_session()
-#
-#     # Test request
-#     reqs.session = session.session
-#     reqs.fetch_test()
+def refresh_auth():
+    # Init classes
+    file_handling = FileHandling()
+
+    local_cred = LocalCredHandling(load_save=file_handling)
+    secrets = ClientSecretsGoogleHandling(
+        file_service=local_cred,
+        filename=CREDS_LOC
+    )
+    token = AuthTokenFileHandling(
+        file_service=local_cred,
+        filename=TOKEN_LOC,
+        scope=SCOPES
+    )
+
+    refresh = RefreshCredentialFile(
+        client_handling=secrets,
+        token_handling=token
+    )
+    oauth = Oauth2UsingToken(creds_service=refresh)
+
+    session = RequestSession(authorizing_oauth=oauth)
+    reqs = SessionRequests()
+
+    # Authorize session
+    session.authorize_session()
+
+    # Test request
+    reqs.session = session.session
+    reqs.fetch_test()
 
 
 if __name__ == '__main__':
-    manual_auth()
+    refresh_auth()

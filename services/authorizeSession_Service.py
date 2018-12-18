@@ -7,6 +7,7 @@ if base_path not in sys.path:
 
 # Custom imports
 from procedures.oauth2Flow_Procedures import Oauth2UsingFlow
+from procedures.oauth2Refresh_Procedures import Oauth2UsingToken
 
 
 class RequestSession:
@@ -19,7 +20,7 @@ class RequestSession:
     """
     def __init__(
             self,
-            authorizing_oauth: Oauth2UsingFlow
+            authorizing_oauth: [Oauth2UsingFlow, Oauth2UsingToken]
     ):
         self.authorizing_oauth = authorizing_oauth
         # Internally determined parameters

@@ -337,7 +337,7 @@ class AuthTokenFileHandling:
         self.scope = token_dict['scope']
         self.token_type = token_dict['toke_type']
         self.id_token = token_dict['id_token']
-        self.expires_at = datetime.fromtimestamp(token_dict['expires_at'])
+        self.expires_at = datetime.fromtimestamp(float(token_dict['expires_at']))
 
         if 'valid' in token_dict:
             self.valid = token_dict['valid']
