@@ -1,6 +1,6 @@
 import os
 import sys
-base_path = os.path.abspath(os.path.join('..'))
+base_path = os.path.abspath(os.path.join('.'))
 if base_path not in sys.path:
     sys.path.append(base_path)
 
@@ -30,7 +30,7 @@ TOKEN_FILE = 'token.json'
 TOKEN_LOC = os.path.join(base_path, TOKEN_FILE)
 
 # The ID and range of a sample spreadsheet.
-SAMPLE_SPREADSHEET_ID = ''
+SAMPLE_SPREADSHEET_ID = '1v2FyrUtzoSejoZSQWPxSXIuhusmfazu19E0v9iD2UKk'
 SAMPLE_RANGE_NAME = ''
 
 
@@ -96,6 +96,9 @@ def refresh_auth():
     # Test request
     reqs.session = session.session
     reqs.fetch_test()
+
+    # Temporary: for testing requests lib
+    return reqs.session
 
 
 if __name__ == '__main__':
