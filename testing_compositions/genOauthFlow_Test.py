@@ -19,7 +19,7 @@ from services.requestsHTTP_Services import SessionRequests
 
 # Scopes and file names for testing
 SCOPES = [
-    'https://www.googleapis.com/auth/spreadsheets.readonly',
+    'https://www.googleapis.com/auth/spreadsheets',
     'https://www.googleapis.com/auth/userinfo.profile'
 ]
 # Define credentials file
@@ -28,10 +28,6 @@ CREDS_LOC = os.path.join(base_path, CREDS_FILE)
 # Define token file
 TOKEN_FILE = 'token.json'
 TOKEN_LOC = os.path.join(base_path, TOKEN_FILE)
-
-# The ID and range of a sample spreadsheet.
-SAMPLE_SPREADSHEET_ID = '1v2FyrUtzoSejoZSQWPxSXIuhusmfazu19E0v9iD2UKk'
-SAMPLE_RANGE_NAME = ''
 
 
 def manual_auth():
@@ -64,6 +60,9 @@ def manual_auth():
     # Test request
     reqs.session = session.session
     reqs.fetch_test()
+
+    # Temporary: for testing requests lib
+    return reqs.session
 
 
 def refresh_auth():
